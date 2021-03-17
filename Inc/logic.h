@@ -8,7 +8,7 @@ PA8 - O*
 PA9 - X*
 PA10- A*
 PA11- B*
-PA12- back
+PA12- back--не работает
 PA15- LED_4
 PB3 - Lb
 PB4 - Ls
@@ -86,7 +86,7 @@ typedef union{
     uint8_t start :1;//1.4
     uint8_t select:1;//1.5
     uint8_t home  :1;//1.6
-    uint8_t back  :1;//1.7
+    uint8_t back  :1;//1.7--не работает
     
     uint8_t list  :1;//2.0
     uint8_t StickA:1;//2.1
@@ -112,7 +112,6 @@ typedef struct{
   int16_t zeroValG;
 }jStick_t;
 
-
 //лампочки
 typedef struct{
   uint8_t one;
@@ -121,6 +120,19 @@ typedef struct{
   uint8_t four;
 }jLed_t;
 
+//режимы работы
+typedef enum{
+  MODE_1 = 1,
+  MODE_2, 
+  MODE_3
+} mode_e;
+
+typedef struct{
+  mode_e    osn;
+  mode_e    dop;
+  uint8_t   isMode;
+}jMode_t;
+
 void LOGICstart();
 void LOGIC();
 void vReadStatePins();
@@ -128,3 +140,6 @@ uint8_t xGetStateGpio(uint8_t stateOutpt, GPIO_TypeDef *GPIOx, uint16_t GPIO_Pin
 void vSetStateGpio(uint8_t stateInput, GPIO_TypeDef *GPIOx, uint16_t GPIO_Pin);
 void vSendStateJ();
 void vSetStartADC();
+void vNavigationMode();
+void vToogleLedLow(uint8_t led);
+int map_i (int x, int in_min, int in_max, int out_min, int out_max);

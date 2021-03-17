@@ -30,9 +30,10 @@
 
 #include "logic.h"
 
-uint32_t timer1msSleep = 0;
-uint32_t timer1msSendState = 0;
+uint32_t timer_Sleep = 0;
+uint32_t timer_SendState = 0;
 uint32_t timer_Led4 = 0;
+uint32_t timer_LedLow = 0;
 extern uint8_t flagDmaAdc;
 extern jButton_t jButton;
 
@@ -230,9 +231,10 @@ void TIM1_UP_IRQHandler(void)
   /* USER CODE END TIM1_UP_IRQn 0 */
   HAL_TIM_IRQHandler(&htim1);
   /* USER CODE BEGIN TIM1_UP_IRQn 1 */
-  timer1msSleep++;
-  timer1msSendState++;
+  timer_Sleep++;
+  timer_SendState++;
   timer_Led4++;
+  timer_LedLow++;
   /* USER CODE END TIM1_UP_IRQn 1 */
 }
 

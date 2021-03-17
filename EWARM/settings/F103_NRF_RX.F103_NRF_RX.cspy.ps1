@@ -23,9 +23,9 @@
 
 if ($debugfile -eq "")
 {
-& "C:\Program Files (x86)\IAR Systems\Embedded Workbench 8.1\common\bin\cspybat" -f "D:\project\Project stm\NRF\рабочее\стороннее\F103_NRF_TX\EWARM\settings\F103_NRF_RX.F103_NRF_RX.general.xcl" --backend -f "D:\project\Project stm\NRF\рабочее\стороннее\F103_NRF_TX\EWARM\settings\F103_NRF_RX.F103_NRF_RX.driver.xcl" 
+& "C:\Program Files (x86)\IAR Systems\Embedded Workbench 8.1\common\bin\cspybat" -f "D:\project\Project stm\NRF\F103_NRF_TX_J\EWARM\settings\F103_NRF_RX.F103_NRF_RX.general.xcl" --backend -f "D:\project\Project stm\NRF\F103_NRF_TX_J\EWARM\settings\F103_NRF_RX.F103_NRF_RX.driver.xcl" 
 }
 else
 {
-& "C:\Program Files (x86)\IAR Systems\Embedded Workbench 8.1\common\bin\cspybat" -f "D:\project\Project stm\NRF\рабочее\стороннее\F103_NRF_TX\EWARM\settings\F103_NRF_RX.F103_NRF_RX.general.xcl" --debug_file=$debugfile --backend -f "D:\project\Project stm\NRF\рабочее\стороннее\F103_NRF_TX\EWARM\settings\F103_NRF_RX.F103_NRF_RX.driver.xcl" 
+& "C:\Program Files (x86)\IAR Systems\Embedded Workbench 8.1\common\bin\cspybat" -f "D:\project\Project stm\NRF\F103_NRF_TX_J\EWARM\settings\F103_NRF_RX.F103_NRF_RX.general.xcl" --debug_file=$debugfile --backend -f "D:\project\Project stm\NRF\F103_NRF_TX_J\EWARM\settings\F103_NRF_RX.F103_NRF_RX.driver.xcl" 
 }

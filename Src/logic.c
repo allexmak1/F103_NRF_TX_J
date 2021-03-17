@@ -1,3 +1,39 @@
+/*Работа индикации
+-> При старте заполняется индикатор светодиодов и гаснет
+-> При нажатии кнопки Select переключаем режим
+____ Светодиод 1 - выбран режим 1
+____ Светодиод 2 - выбран режим 2
+____ Светодиод 3 - выбран режим 3
+     Светодиод 4 - индикация режима сна
+					 х  (негорит) 		 - выключен J
+					_  _(мигает редко 3s)    - работает J, приемник найден
+					____(горит) 		 - J спит
+                                        _  _(мигает часто 0,1s)  - ошибка J, будет перезапуск через 1s
+                                                                   либо не инициализирован NRF, либо фатальная ошибка,
+                                                                   на это 10 попыток, если не получилось засыпаем. <-- немогу сделать нужназапись в флеш
+
+-> При нажатии кнопки list, светодиоды режимов начинают мигать, это меню дополнительных режимов.
+Выбранный мигает, сменить кнопкой Select, выйти list либо сам через 8s.
+_ _ _ Светодиод 1 - выбран доп. режим 1
+_ _ _ Светодиод 2 - выбран доп. режим 2
+_ _ _ Светодиод 3 - выбран доп. режим 3
+-> При долгом удержании кнопки home 4s  (в осн настройках) поазывает заряд акб передатчика
+   мигает все 1раз, после покажет заряд джойстика
+-> При долгом удержании кнопки home 4s (в доп настройках (кн. list)) поазывает заряд акб приемника
+   мигает все 1раз, после покажет заряд приемника
+*/
+
+/*Timer1
+  настроен так:
+  72000/7199*9 прерывание каждую каждую 1ms
+*/
+
+/*WatchDog
+  настроен так:
+  PCLK1/4096/VDGTB
+  4500 кгц/4096/4 = 0.2746 кгц -> 3.6 ms
+  таймер1 сбрасывает флаг каждую 1ms
+*/
 #include "logic.h"
 #include "main.h"
 #include "string.h"
@@ -11,20 +47,20 @@ jButton_t jButton       = {0};
 jStick_t  jStickA       = {0};
 jStick_t  jStickB       = {0};
 jLed_t    jLed          = {0};
+jMode_t   jMode   	= {MODE_1, MODE_1, 1};
 
-extern uint32_t timer1msSleep;
-extern uint32_t timer1msSendState;
+extern uint32_t timer_Sleep;
+extern uint32_t timer_SendState;
 extern uint32_t timer_Led4;
+extern uint32_t timer_LedLow;
 
-volatile uint16_t adc[4] = {0,}; // ? ??? ??? ?????? ??????? ?????? ?? 4 ?????????
+volatile uint16_t adc[4] = {0,}; // у нас два канала поэтому массив из 4 элементов
 volatile uint8_t flagDmaAdc = 0;
-
-
+uint8_t flag1, flag2;
 
 extern uint8_t nRF24_payload[32];
 extern nRF24_RXResult pipe;
 extern  uint8_t payload_length;
-//extern uint32_t i;
 extern nRF24_TXResult tx_res;
 
 void runRadio(void);
@@ -56,49 +92,64 @@ void LOGIC(){
   vReadStatePins();
   
   // подготовка данных
-nRF24_payload[0] = jButton.uint8Message.gr1;
-nRF24_payload[1] = jButton.uint8Message.gr2;;
-nRF24_payload[2] = jButton.uint8Message.gr3;;
-nRF24_payload[3] = jButton.uint8Message.gr4;;
-nRF24_payload[4] = jStickA.ValV;
-nRF24_payload[5] = jStickA.ValV >> 8;
-nRF24_payload[6] = jStickA.ValG;
-nRF24_payload[7] = jStickA.ValG >> 8;
-nRF24_payload[8] = jStickB.ValV;
-nRF24_payload[9] = jStickB.ValV >> 8;
-nRF24_payload[10] = jStickB.ValG;
-nRF24_payload[11] = jStickB.ValG >> 8;
+  nRF24_payload[0] = jButton.uint8Message.gr1;
+  nRF24_payload[1] = jButton.uint8Message.gr2;;
+  nRF24_payload[2] = jButton.uint8Message.gr3;;
+  nRF24_payload[3] = jButton.uint8Message.gr4;;
+  nRF24_payload[4] = jStickA.ValV;
+  nRF24_payload[5] = jStickA.ValV >> 8;
+  nRF24_payload[6] = jStickA.ValG;
+  nRF24_payload[7] = jStickA.ValG >> 8;
+  nRF24_payload[8] = jStickB.ValV;
+  nRF24_payload[9] = jStickB.ValV >> 8;
+  nRF24_payload[10] = jStickB.ValG;
+  nRF24_payload[11] = jStickB.ValG >> 8;
 
-  
-
-
-  
-  
-  
-
-  if(timer1msSendState > 200){
-    timer1msSendState = 0;
+  if(timer_SendState > 200){
+    timer_SendState = 0;
+    //периодическая отправка данных по NRF
     vSendStateJ();
-  
+    //навигация между режимами
+    vNavigationMode();
   }
   
+  //индикация работы 4го светодиода 
   if(timer_Led4 > 3000){
   //timer1msLed = 0;
   //jLed.one = ~jLed.one &0x01;
   //jLed.two = ~jLed.two &0x01;
   //jLed.fhree = ~jLed.fhree &0x01;
   //jLed.four = ~jLed.four &0x01;
-  
-  
-      if(timer_Led4 > 3000 && timer_Led4 < 3010) jLed.four = 1;
+    if(timer_Led4 > 3000 && timer_Led4 < 3010) jLed.four = 1;
     if(timer_Led4 > 3100){
       timer_Led4 = 0;
       jLed.four = 0;
     }
-}
+  }
 
+  //отсчет таймера засыпания 
+  if(timer_Sleep > TIMER_SLEEP){
+    //timer_Sleep=0;
+    //индикация 4ой лампочки
+    //vSetStateGpio(1, GPIOA, GPIO_PIN_15);
+    //    //раскоментить
+    //    //остановка NRF
+    //    powerDown();	
+    //    //остановка тактирования
+    //    HAL_TIM_Base_Stop_IT(&htim1);
+    //    HAL_TIM_Base_Stop(&htim1);
+    //    HAL_SuspendTick();//регистр  TICKINT
+    //    
+    //    //засыпаем
+    //    HAL_PWR_EnterSTOPMode(PWR_LOWPOWERREGULATOR_ON , PWR_SLEEPENTRY_WFI);
+    //
+    //    //просыпаемся
+    //    HAL_GPIO_WritePin(GPIOA, GPIO_PIN_15, GPIO_PIN_RESET);
+    //    //!!!здесь проще запустить перезагрузку МК, чем запуск всей переферии, так как сбрасываются все регисторы настроек при глубоком сне
+    //    //сделанно это просто - не вкючаем тактирование таймера1, там где сбрасывется сторожевой таймер, он и перезагрузит.
+    //    
+  }
   //HAL_Delay(10);
-  
 }
 
 void vReadStatePins(){
@@ -207,7 +258,7 @@ uint8_t xGetStateGpio(uint8_t stateInput, GPIO_TypeDef *GPIOx, uint16_t GPIO_Pin
   uint8_t state = stateInput;
   if(state != (HAL_GPIO_ReadPin(GPIOx, GPIO_Pin))){
     state = HAL_GPIO_ReadPin(GPIOx, GPIO_Pin);
-    timer1msSleep=0;
+    timer_Sleep=0;
   }
   return state;
 }
@@ -221,30 +272,31 @@ void vSetStateGpio(uint8_t stateInput, GPIO_TypeDef *GPIOx, uint16_t GPIO_Pin){
 }
 void vSendStateJ(){
   
-    	// Print a payload
-    	UART_SendStr("PAYLOAD:>");
-    	UART_SendBufHex((char *)nRF24_payload, payload_length);
-    	UART_SendStr("< ... TX: ");
-
-    	// Transmit a packet
-    	tx_res = nRF24_TransmitPacket(nRF24_payload, payload_length);
-    	switch (tx_res) {
-			case nRF24_TX_SUCCESS:
-				UART_SendStr("OK");
-				break;
-			case nRF24_TX_TIMEOUT:
-				UART_SendStr("TIMEOUT");
-				break;
-			case nRF24_TX_MAXRT:
-				UART_SendStr("MAX RETRANSMIT");
-				break;
-			default:
-				UART_SendStr("ERROR");
-				break;
-		}
-    	UART_SendStr("\r\n");
+  // Print a payload
+  UART_SendStr("PAYLOAD:>");
+  UART_SendBufHex((char *)nRF24_payload, payload_length);
+  UART_SendStr("< ... TX: ");
+  
+  // Transmit a packet
+  tx_res = nRF24_TransmitPacket(nRF24_payload, payload_length);
+  switch (tx_res) {
+  case nRF24_TX_SUCCESS:
+    UART_SendStr("OK");
+    break;
+  case nRF24_TX_TIMEOUT:
+    UART_SendStr("TIMEOUT");
+    break;
+  case nRF24_TX_MAXRT:
+    UART_SendStr("MAX RETRANSMIT");
+    break;
+  default:
+    UART_SendStr("ERROR");
+    break;
+  }
+  UART_SendStr("\r\n");
 }
 
+//стартовое измерение нуля
 void vSetStartADC(){
   HAL_ADCEx_Calibration_Start(&hadc1);
   HAL_ADC_Start_DMA(&hadc1, (uint32_t*)&adc, 16); // ???????? ???
@@ -265,7 +317,97 @@ void vSetStartADC(){
   };
 }
 
+//навигация между режимами
+void vNavigationMode(){
+   if(jButton.bit.back){ //перекл, осн/доп режим
+    if(flag1){
+      flag1 = 0;
+      jMode.isMode = ~jMode.isMode & 0x01;
+    }
+  }else flag1 = 1;
+  if(jButton.bit.list){ //перекл, режима
+    if(flag2){
+      flag2 = 0;
+      if(jMode.isMode){
+        switch(jMode.osn){
+        case MODE_1:
+          jMode.osn = MODE_2;
+          break;
+        case MODE_2:
+          jMode.osn = MODE_3;
+          break;
+        case MODE_3:
+          jMode.osn = MODE_1;
+          break;
+        }
+      }else{
+        switch(jMode.dop){
+        case MODE_1:
+          jMode.dop = MODE_2;
+          break;
+        case MODE_2:
+          jMode.dop = MODE_3;
+          break;
+        case MODE_3:
+          jMode.dop = MODE_1;
+          break;
+        }
+      }
+    }
+  }else flag2 = 1;
+  if(jMode.isMode == 0){
+    //режим
+    switch(jMode.osn){
+    case MODE_1:
+      jLed.one   = 1;
+      jLed.two   = 0;
+      jLed.fhree = 0;
+      break;
+    case MODE_2:
+      jLed.one   = 0;
+      jLed.two   = 1;
+      jLed.fhree = 0;
+      break;
+    case MODE_3:
+      jLed.one   = 0;
+      jLed.two   = 0;
+      jLed.fhree = 1;
+      break;
+    }
+  }else{
+    //режим дополнительный
+    switch(jMode.dop){
+    case MODE_1:
+      vToogleLedLow(jLed.one);
+      jLed.two   = 0;
+      jLed.fhree = 0;
+      break;
+    case MODE_2:
+      jLed.one   = 0;
+      vToogleLedLow(jLed.two);
+      jLed.fhree = 0;
+      break;
+    case MODE_3:
+      jLed.one   = 0;
+      jLed.two   = 0;
+      vToogleLedLow(jLed.fhree);
+      break;
+    }
+  }
+}
 
+//мигание светодиода, медленное
+void vToogleLedLow(uint8_t led){
+  if(timer_LedLow > 1000){
+    timer_LedLow = 0;
+    led = ~led & 0x01;
+  }
+}
+
+//масштабирование
+int map_i (int x, int in_min, int in_max, int out_min, int out_max){
+  return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+}
 
 
 
