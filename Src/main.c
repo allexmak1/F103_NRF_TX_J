@@ -74,7 +74,7 @@ void runRadio(void);
 
 /**
   * @brief  The application entry point.
-  * @retval int
+  * @retval int 
   */
 int main(void)
 {
