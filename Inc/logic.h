@@ -65,7 +65,7 @@ PC13- LED_1
 //0000 1111 1111 1111 0000 1111 1111 1111
 //|<-         ValG <- |<-         ValV <-
 //пустой для четности - 4 байта
-//0000 0000 0000 0000 0000 0000 0000 0000
+//0000 0000 0000 0000 0000 0111 0000 0111
 
 //кнопки
 typedef union{
@@ -141,5 +141,5 @@ void vSetStateGpio(uint8_t stateInput, GPIO_TypeDef *GPIOx, uint16_t GPIO_Pin);
 void vSendStateJ();
 void vSetStartADC();
 void vNavigationMode();
-void vToogleLedLow(uint8_t led);
+uint8_t vToogleLedLow(uint8_t led);
 int map_i (int x, int in_min, int in_max, int out_min, int out_max);

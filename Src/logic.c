@@ -47,7 +47,7 @@ jButton_t jButton       = {0};
 jStick_t  jStickA       = {0};
 jStick_t  jStickB       = {0};
 jLed_t    jLed          = {0};
-jMode_t   jMode   	= {MODE_1, MODE_1, 1};
+jMode_t   jMode   	= {MODE_1, MODE_1, 0};
 
 extern uint32_t timer_Sleep;
 extern uint32_t timer_SendState;
@@ -104,6 +104,8 @@ void LOGIC(){
   nRF24_payload[9] = jStickB.ValV >> 8;
   nRF24_payload[10] = jStickB.ValG;
   nRF24_payload[11] = jStickB.ValG >> 8;
+  nRF24_payload[12] = jMode.osn;
+  nRF24_payload[13] = jMode.dop;
 
   if(timer_SendState > 200){
     timer_SendState = 0;
@@ -160,31 +162,26 @@ void vReadStatePins(){
   vSetStateGpio(jLed.fhree, GPIOC, GPIO_PIN_15);
   vSetStateGpio(jLed.four, GPIOA, GPIO_PIN_15);
   //кнопки (обрабатываем только те которые не EXTI)
-  jButton.bit.Lb        = xGetStateGpio(jButton.bit.Lb,      GPIOB, GPIO_PIN_3);
-  jButton.bit.Ls        = xGetStateGpio(jButton.bit.Ls,      GPIOB, GPIO_PIN_4);
-  jButton.bit.home      = xGetStateGpio(jButton.bit.home,      GPIOB, GPIO_PIN_8);
-  jButton.bit.list      = xGetStateGpio(jButton.bit.list,      GPIOB, GPIO_PIN_9);
-  //какой то глюк (всегда на этой ноге 1)
-  jButton.bit.back      = 0;//xGetStateGpio(jButton.bit.back,    GPIOA, GPIO_PIN_12);
-  
-  jButton.bit.StickA    = xGetStateGpio(jButton.bit.StickA,  GPIOB, GPIO_PIN_11);
-  jButton.bit.StickB    = xGetStateGpio(jButton.bit.StickB,  GPIOB, GPIO_PIN_10);
-  //
-  jButton.bit.up        = xGetStateGpio(jButton.bit.up,  GPIOB, GPIO_PIN_12);
-  jButton.bit.dawn      = xGetStateGpio(jButton.bit.dawn,  GPIOB, GPIO_PIN_13);
-  jButton.bit.write     = xGetStateGpio(jButton.bit.write,  GPIOB, GPIO_PIN_14);
-  jButton.bit.left      = xGetStateGpio(jButton.bit.left,  GPIOB, GPIO_PIN_15);
-  jButton.bit.O         = xGetStateGpio(jButton.bit.O,  GPIOA, GPIO_PIN_8);
-  
-  
+  jButton.bit.up        = xGetStateGpio(jButton.bit.up,         GPIOB, GPIO_PIN_12);
+  jButton.bit.dawn      = xGetStateGpio(jButton.bit.dawn,       GPIOB, GPIO_PIN_13);
+  jButton.bit.write     = xGetStateGpio(jButton.bit.write,      GPIOB, GPIO_PIN_14);
+  jButton.bit.left      = xGetStateGpio(jButton.bit.left,       GPIOB, GPIO_PIN_15);  
+  jButton.bit.O         = xGetStateGpio(jButton.bit.O,          GPIOA, GPIO_PIN_8);
   //jButton.bit.X         = xGetStateGpio(jButton.bit.X,  GPIOA, GPIO_PIN_9);
   //jButton.bit.A         = xGetStateGpio(jButton.bit.A,  GPIOA, GPIO_PIN_10);
-  
-  jButton.bit.B         = xGetStateGpio(jButton.bit.B,  GPIOA, GPIO_PIN_11);
-  jButton.bit.Wb        = xGetStateGpio(jButton.bit.Wb,  GPIOB, GPIO_PIN_5);
-  jButton.bit.Ws        = xGetStateGpio(jButton.bit.Ws,  GPIOB, GPIO_PIN_6);
-  jButton.bit.start     = xGetStateGpio(jButton.bit.start,  GPIOA, GPIO_PIN_0);
-  jButton.bit.select    = xGetStateGpio(jButton.bit.select,  GPIOB, GPIO_PIN_7);
+  jButton.bit.B         = xGetStateGpio(jButton.bit.B,          GPIOA, GPIO_PIN_11);
+  jButton.bit.Lb        = xGetStateGpio(jButton.bit.Lb,         GPIOB, GPIO_PIN_3);
+  jButton.bit.Ls        = xGetStateGpio(jButton.bit.Ls,         GPIOB, GPIO_PIN_4);
+  jButton.bit.Wb        = xGetStateGpio(jButton.bit.Wb,         GPIOB, GPIO_PIN_5);
+  jButton.bit.Ws        = xGetStateGpio(jButton.bit.Ws,         GPIOB, GPIO_PIN_6);
+  jButton.bit.start     = xGetStateGpio(jButton.bit.start,      GPIOA, GPIO_PIN_0);
+  jButton.bit.select    = xGetStateGpio(jButton.bit.select,     GPIOB, GPIO_PIN_7);
+  jButton.bit.home      = xGetStateGpio(jButton.bit.home,       GPIOB, GPIO_PIN_8);
+  //????? ?? ???? (?????? ?? ???? ???? 1)
+  jButton.bit.back      = 0;//xGetStateGpio(jButton.bit.back,    GPIOA, GPIO_PIN_12);
+  jButton.bit.list      = xGetStateGpio(jButton.bit.list,       GPIOB, GPIO_PIN_9);
+  jButton.bit.StickA    = xGetStateGpio(jButton.bit.StickA,     GPIOB, GPIO_PIN_11);
+  jButton.bit.StickB    = xGetStateGpio(jButton.bit.StickB,     GPIOB, GPIO_PIN_10);
 
   //кнопки которые в EXTI смотрим только отжатие
   /*if(jButton.bit.up)    jButton.bit.up    = xGetStateGpio(jButton.bit.up,      GPIOB, GPIO_PIN_12);
@@ -319,16 +316,16 @@ void vSetStartADC(){
 
 //навигация между режимами
 void vNavigationMode(){
-   if(jButton.bit.back){ //перекл, осн/доп режим
+   if(jButton.bit.select){ //перекл, осн/доп режим
     if(flag1){
       flag1 = 0;
       jMode.isMode = ~jMode.isMode & 0x01;
     }
   }else flag1 = 1;
-  if(jButton.bit.list){ //перекл, режима
+  if(jButton.bit.start){ //перекл, режима
     if(flag2){
       flag2 = 0;
-      if(jMode.isMode){
+      if(jMode.isMode == 0){
         switch(jMode.osn){
         case MODE_1:
           jMode.osn = MODE_2;
@@ -355,6 +352,7 @@ void vNavigationMode(){
       }
     }
   }else flag2 = 1;
+  //bylbrfwbx vty.
   if(jMode.isMode == 0){
     //режим
     switch(jMode.osn){
@@ -378,30 +376,31 @@ void vNavigationMode(){
     //режим дополнительный
     switch(jMode.dop){
     case MODE_1:
-      vToogleLedLow(jLed.one);
+      jLed.one   = vToogleLedLow(jLed.one);
       jLed.two   = 0;
       jLed.fhree = 0;
       break;
     case MODE_2:
       jLed.one   = 0;
-      vToogleLedLow(jLed.two);
+      jLed.two   = vToogleLedLow(jLed.two);
       jLed.fhree = 0;
       break;
     case MODE_3:
       jLed.one   = 0;
       jLed.two   = 0;
-      vToogleLedLow(jLed.fhree);
+      jLed.fhree = vToogleLedLow(jLed.fhree);
       break;
     }
   }
 }
 
 //мигание светодиода, медленное
-void vToogleLedLow(uint8_t led){
-  if(timer_LedLow > 1000){
+uint8_t vToogleLedLow(uint8_t led){
+  //uint8_t state
+  if(timer_LedLow > 600){
     timer_LedLow = 0;
-    led = ~led & 0x01;
-  }
+    return ~led & 0x01;
+  }else return led;
 }
 
 //масштабирование

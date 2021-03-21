@@ -23,7 +23,7 @@ void UART_SendStr(char *string) {
 }
 
 void Toggle_LED() {
-	HAL_GPIO_TogglePin(GPIOC,GPIO_PIN_13);
+	HAL_GPIO_TogglePin(GPIOA,GPIO_PIN_15);
 }
 #else //USE_HAL_DRIVER
 
