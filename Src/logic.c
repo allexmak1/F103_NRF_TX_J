@@ -23,6 +23,12 @@ _ _ _ Светодиод 3 - выбран доп. режим 3
    мигает все 1раз, после покажет заряд приемника
 */
 
+/*
+потребление в работе 0.040А
+            во сне   0.005А
+*/
+
+
 /*Timer1
   настроен так:
   72000/7199*9 прерывание каждую каждую 1ms
@@ -69,19 +75,19 @@ void UART_SendBufHex(char *buf, uint16_t bufsize);
 nRF24_TXResult nRF24_TransmitPacket(uint8_t *pBuf, uint8_t length);
 
 void LOGICstart(){
-HAL_Delay(500);
+  HAL_TIM_Base_Start_IT(&htim1);
+//HAL_Delay(500);
   vSetStateGpio(0, GPIOC, GPIO_PIN_13);
   vSetStateGpio(0, GPIOC, GPIO_PIN_14);
   vSetStateGpio(0, GPIOC, GPIO_PIN_15);
   vSetStateGpio(0, GPIOA, GPIO_PIN_15);
   
-  HAL_TIM_Base_Start_IT(&htim1);
   //инициализация
   HAL_Delay(100);
   runRadio();
   vSetStartADC();
   payload_length = 12;
-  HAL_Delay(500);
+  HAL_Delay(300);
   
 }
 
@@ -131,25 +137,28 @@ void LOGIC(){
 
   //отсчет таймера засыпания 
   if(timer_Sleep > TIMER_SLEEP){
-    //timer_Sleep=0;
+    timer_Sleep=0;
     //индикация 4ой лампочки
-    //vSetStateGpio(1, GPIOA, GPIO_PIN_15);
-    //    //раскоментить
-    //    //остановка NRF
-    //    powerDown();	
-    //    //остановка тактирования
-    //    HAL_TIM_Base_Stop_IT(&htim1);
-    //    HAL_TIM_Base_Stop(&htim1);
-    //    HAL_SuspendTick();//регистр  TICKINT
-    //    
-    //    //засыпаем
-    //    HAL_PWR_EnterSTOPMode(PWR_LOWPOWERREGULATOR_ON , PWR_SLEEPENTRY_WFI);
-    //
-    //    //просыпаемся
-    //    HAL_GPIO_WritePin(GPIOA, GPIO_PIN_15, GPIO_PIN_RESET);
-    //    //!!!здесь проще запустить перезагрузку МК, чем запуск всей переферии, так как сбрасываются все регисторы настроек при глубоком сне
-    //    //сделанно это просто - не вкючаем тактирование таймера1, там где сбрасывется сторожевой таймер, он и перезагрузит.
-    //    
+    vSetStateGpio(0, GPIOC, GPIO_PIN_13);
+    vSetStateGpio(0, GPIOC, GPIO_PIN_14);
+    vSetStateGpio(0, GPIOC, GPIO_PIN_15);
+    vSetStateGpio(1, GPIOA, GPIO_PIN_15);
+
+    //остановка NRF
+    nRF24_SetPowerMode(nRF24_PWR_DOWN);	
+    //остановка тактирования
+    HAL_TIM_Base_Stop_IT(&htim1);
+    HAL_TIM_Base_Stop(&htim1);
+    HAL_SuspendTick();//регистр  TICKINT
+    
+    //засыпаем
+    HAL_PWR_EnterSTOPMode(PWR_LOWPOWERREGULATOR_ON , PWR_SLEEPENTRY_WFI);
+    
+    //просыпаемся
+    HAL_GPIO_WritePin(GPIOA, GPIO_PIN_15, GPIO_PIN_RESET);
+    //!!!здесь проще запустить перезагрузку МК, чем запуск всей переферии, так как сбрасываются все регисторы настроек при глубоком сне
+    //сделанно это просто - не вкючаем тактирование таймера1, там где сбрасывется сторожевой таймер, он и перезагрузит.
+    
   }
   //HAL_Delay(10);
 }
@@ -174,7 +183,7 @@ void vReadStatePins(){
   jButton.bit.Ls        = xGetStateGpio(jButton.bit.Ls,         GPIOB, GPIO_PIN_4);
   jButton.bit.Wb        = xGetStateGpio(jButton.bit.Wb,         GPIOB, GPIO_PIN_5);
   jButton.bit.Ws        = xGetStateGpio(jButton.bit.Ws,         GPIOB, GPIO_PIN_6);
-  jButton.bit.start     = xGetStateGpio(jButton.bit.start,      GPIOA, GPIO_PIN_0);
+  //jButton.bit.start     = xGetStateGpio(jButton.bit.start,      GPIOA, GPIO_PIN_0);
   jButton.bit.select    = xGetStateGpio(jButton.bit.select,     GPIOB, GPIO_PIN_7);
   jButton.bit.home      = xGetStateGpio(jButton.bit.home,       GPIOB, GPIO_PIN_8);
   //????? ?? ???? (?????? ?? ???? ???? 1)
@@ -184,18 +193,18 @@ void vReadStatePins(){
   jButton.bit.StickB    = xGetStateGpio(jButton.bit.StickB,     GPIOB, GPIO_PIN_10);
 
   //кнопки которые в EXTI смотрим только отжатие
-  /*if(jButton.bit.up)    jButton.bit.up    = xGetStateGpio(jButton.bit.up,      GPIOB, GPIO_PIN_12);
-  if(jButton.bit.dawn)  jButton.bit.dawn  = xGetStateGpio(jButton.bit.dawn,    GPIOB, GPIO_PIN_13);
-  if(jButton.bit.write) jButton.bit.write = xGetStateGpio(jButton.bit.write,   GPIOB, GPIO_PIN_14);
-  if(jButton.bit.left)  jButton.bit.left  = xGetStateGpio(jButton.bit.left,    GPIOB, GPIO_PIN_15);
-  if(jButton.bit.O)     jButton.bit.O     = xGetStateGpio(jButton.bit.O,       GPIOA, GPIO_PIN_8);
-  if(jButton.bit.X)     jButton.bit.X     = xGetStateGpio(jButton.bit.X,       GPIOA, GPIO_PIN_9);
-  if(jButton.bit.A)     jButton.bit.A     = xGetStateGpio(jButton.bit.A,       GPIOA, GPIO_PIN_10);
-  if(jButton.bit.B)     jButton.bit.B     = xGetStateGpio(jButton.bit.A,       GPIOA, GPIO_PIN_11);
+//  if(jButton.bit.up)    jButton.bit.up    = xGetStateGpio(jButton.bit.up,      GPIOB, GPIO_PIN_12);
+//  if(jButton.bit.dawn)  jButton.bit.dawn  = xGetStateGpio(jButton.bit.dawn,    GPIOB, GPIO_PIN_13);
+//  if(jButton.bit.write) jButton.bit.write = xGetStateGpio(jButton.bit.write,   GPIOB, GPIO_PIN_14);
+//  if(jButton.bit.left)  jButton.bit.left  = xGetStateGpio(jButton.bit.left,    GPIOB, GPIO_PIN_15);
+//  if(jButton.bit.O)     jButton.bit.O     = xGetStateGpio(jButton.bit.O,       GPIOA, GPIO_PIN_8);
+//  if(jButton.bit.X)     jButton.bit.X     = xGetStateGpio(jButton.bit.X,       GPIOA, GPIO_PIN_9);
+//  if(jButton.bit.A)     jButton.bit.A     = xGetStateGpio(jButton.bit.A,       GPIOA, GPIO_PIN_10);
+//  if(jButton.bit.B)     jButton.bit.B     = xGetStateGpio(jButton.bit.A,       GPIOA, GPIO_PIN_11);
   if(jButton.bit.start) jButton.bit.start = xGetStateGpio(jButton.bit.start,   GPIOA, GPIO_PIN_0);
-  if(jButton.bit.select)jButton.bit.select= xGetStateGpio(jButton.bit.select,  GPIOB, GPIO_PIN_7);
-  if(jButton.bit.Wb)    jButton.bit.Wb    = xGetStateGpio(jButton.bit.Wb,    GPIOB, GPIO_PIN_5);
-  if(jButton.bit.Ws)    jButton.bit.Ws    = xGetStateGpio(jButton.bit.Ws,    GPIOB, GPIO_PIN_6);*/
+//  if(jButton.bit.select)jButton.bit.select= xGetStateGpio(jButton.bit.select,  GPIOB, GPIO_PIN_7);
+//  if(jButton.bit.Wb)    jButton.bit.Wb    = xGetStateGpio(jButton.bit.Wb,    GPIOB, GPIO_PIN_5);
+//  if(jButton.bit.Ws)    jButton.bit.Ws    = xGetStateGpio(jButton.bit.Ws,    GPIOB, GPIO_PIN_6);
   
   //АЦП код на все каналы
   if(flagDmaAdc)
@@ -407,21 +416,3 @@ uint8_t vToogleLedLow(uint8_t led){
 int map_i (int x, int in_min, int in_max, int out_min, int out_max){
   return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

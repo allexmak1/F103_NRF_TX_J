@@ -51,6 +51,8 @@ TIM_HandleTypeDef htim1;
 
 UART_HandleTypeDef huart1;
 
+WWDG_HandleTypeDef hwwdg;
+
 /* USER CODE BEGIN PV */
 
 /* USER CODE END PV */
@@ -63,8 +65,8 @@ static void MX_SPI1_Init(void);
 static void MX_TIM1_Init(void);
 static void MX_ADC1_Init(void);
 static void MX_USART1_UART_Init(void);
+static void MX_WWDG_Init(void);
 /* USER CODE BEGIN PFP */
-void runRadio(void);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -74,7 +76,7 @@ void runRadio(void);
 
 /**
   * @brief  The application entry point.
-  * @retval int 
+  * @retval int
   */
 int main(void)
 {
@@ -105,10 +107,10 @@ int main(void)
   MX_TIM1_Init();
   MX_ADC1_Init();
   MX_USART1_UART_Init();
+  MX_WWDG_Init();
   /* USER CODE BEGIN 2 */
+  
   LOGICstart();
-
- //runRadio();
 
   /* USER CODE END 2 */
 
@@ -117,11 +119,7 @@ int main(void)
   while (1)
   {
     LOGIC();
-    //HAL_UART_Transmit(&huart1, (uint8_t*)"start\n", strlen("start\n"), 1000);
-    //HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
-    //HAL_Delay(1000);
- 
-
+    
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -359,6 +357,36 @@ static void MX_USART1_UART_Init(void)
 
 }
 
+/**
+  * @brief WWDG Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_WWDG_Init(void)
+{
+
+  /* USER CODE BEGIN WWDG_Init 0 */
+
+  /* USER CODE END WWDG_Init 0 */
+
+  /* USER CODE BEGIN WWDG_Init 1 */
+
+  /* USER CODE END WWDG_Init 1 */
+  hwwdg.Instance = WWDG;
+  hwwdg.Init.Prescaler = WWDG_PRESCALER_4;
+  hwwdg.Init.Window = 127;
+  hwwdg.Init.Counter = 127;
+  hwwdg.Init.EWIMode = WWDG_EWI_DISABLE;
+  if (HAL_WWDG_Init(&hwwdg) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN WWDG_Init 2 */
+
+  /* USER CODE END WWDG_Init 2 */
+
+}
+
 /** 
   * Enable DMA controller clock
   */
@@ -406,9 +434,9 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : PA0 PA8 PA11 PA12 */
-  GPIO_InitStruct.Pin = GPIO_PIN_0|GPIO_PIN_8|GPIO_PIN_11|GPIO_PIN_12;
-  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  /*Configure GPIO pin : PA0 */
+  GPIO_InitStruct.Pin = GPIO_PIN_0;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
   GPIO_InitStruct.Pull = GPIO_PULLDOWN;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
@@ -431,12 +459,22 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_PULLDOWN;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
+  /*Configure GPIO pins : PA8 PA11 PA12 */
+  GPIO_InitStruct.Pin = GPIO_PIN_8|GPIO_PIN_11|GPIO_PIN_12;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_PULLDOWN;
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
   /*Configure GPIO pin : PA15 */
   GPIO_InitStruct.Pin = GPIO_PIN_15;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+  /* EXTI interrupt init*/
+  HAL_NVIC_SetPriority(EXTI0_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(EXTI0_IRQn);
 
 }
 

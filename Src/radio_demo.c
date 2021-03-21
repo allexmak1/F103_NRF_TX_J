@@ -177,7 +177,7 @@ nRF24_TXResult nRF24_TransmitPacket(uint8_t *pBuf, uint8_t length) {
 
 
 
-int runRadio(void) {
+void runRadio(void) {
 	UART_SendStr("\r\nSTM32L432KC is online.\r\n");
 
 	// RX/TX disabled
@@ -930,7 +930,7 @@ int runRadio(void) {
 
 
     // The main loop
-    payload_length = 10;
+    payload_length = 16;
     j = 0;
 //#pragma clang diagnostic push
 //#pragma clang diagnostic ignored "-Wmissing-noreturn"

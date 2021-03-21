@@ -50,7 +50,7 @@ PC13- LED_1
 #include "stm32f1xx_hal.h"
 
 
-#define TIMER_SLEEP 5000//ms
+#define TIMER_SLEEP 60000//ms
 #define OFFSET_ZERO 180 //смещение, антидергание на нуле
 
 //Передавать не больше 32-х байт 

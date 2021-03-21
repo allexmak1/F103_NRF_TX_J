@@ -30,6 +30,8 @@
 
 #include "logic.h"
 
+extern WWDG_HandleTypeDef hwwdg;
+
 uint32_t timer_Sleep = 0;
 uint32_t timer_SendState = 0;
 uint32_t timer_Led4 = 0;
@@ -98,6 +100,10 @@ void HardFault_Handler(void)
   while (1)
   {
     /* USER CODE BEGIN W1_HardFault_IRQn 0 */
+    HAL_GPIO_WritePin (GPIOA, GPIO_PIN_15, GPIO_PIN_SET);
+    HAL_GPIO_WritePin (GPIOC, GPIO_PIN_13, GPIO_PIN_SET);
+    HAL_GPIO_WritePin (GPIOC, GPIO_PIN_14, GPIO_PIN_SET);
+    HAL_GPIO_WritePin (GPIOC, GPIO_PIN_15, GPIO_PIN_SET);
     /* USER CODE END W1_HardFault_IRQn 0 */
   }
 }
@@ -113,6 +119,10 @@ void MemManage_Handler(void)
   while (1)
   {
     /* USER CODE BEGIN W1_MemoryManagement_IRQn 0 */
+    HAL_GPIO_WritePin (GPIOA, GPIO_PIN_15, GPIO_PIN_SET);
+    HAL_GPIO_WritePin (GPIOC, GPIO_PIN_13, GPIO_PIN_SET);
+    HAL_GPIO_WritePin (GPIOC, GPIO_PIN_14, GPIO_PIN_SET);
+    HAL_GPIO_WritePin (GPIOC, GPIO_PIN_15, GPIO_PIN_SET);
     /* USER CODE END W1_MemoryManagement_IRQn 0 */
   }
 }
@@ -128,6 +138,10 @@ void BusFault_Handler(void)
   while (1)
   {
     /* USER CODE BEGIN W1_BusFault_IRQn 0 */
+    HAL_GPIO_WritePin (GPIOA, GPIO_PIN_15, GPIO_PIN_SET);
+    HAL_GPIO_WritePin (GPIOC, GPIO_PIN_13, GPIO_PIN_SET);
+    HAL_GPIO_WritePin (GPIOC, GPIO_PIN_14, GPIO_PIN_SET);
+    HAL_GPIO_WritePin (GPIOC, GPIO_PIN_15, GPIO_PIN_SET);
     /* USER CODE END W1_BusFault_IRQn 0 */
   }
 }
@@ -143,6 +157,10 @@ void UsageFault_Handler(void)
   while (1)
   {
     /* USER CODE BEGIN W1_UsageFault_IRQn 0 */
+    HAL_GPIO_WritePin (GPIOA, GPIO_PIN_15, GPIO_PIN_SET);
+    HAL_GPIO_WritePin (GPIOC, GPIO_PIN_13, GPIO_PIN_SET);
+    HAL_GPIO_WritePin (GPIOC, GPIO_PIN_14, GPIO_PIN_SET);
+    HAL_GPIO_WritePin (GPIOC, GPIO_PIN_15, GPIO_PIN_SET);
     /* USER CODE END W1_UsageFault_IRQn 0 */
   }
 }
@@ -208,6 +226,21 @@ void SysTick_Handler(void)
 /******************************************************************************/
 
 /**
+  * @brief This function handles EXTI line0 interrupt.
+  */
+void EXTI0_IRQHandler(void)
+{
+  /* USER CODE BEGIN EXTI0_IRQn 0 */
+
+  /* USER CODE END EXTI0_IRQn 0 */
+  HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_0);
+  /* USER CODE BEGIN EXTI0_IRQn 1 */
+  timer_Sleep=0;
+  jButton.bit.start  = xGetStateGpio(jButton.bit.start,  GPIOA, GPIO_PIN_0);
+  /* USER CODE END EXTI0_IRQn 1 */
+}
+
+/**
   * @brief This function handles DMA1 channel1 global interrupt.
   */
 void DMA1_Channel1_IRQHandler(void)
@@ -235,6 +268,9 @@ void TIM1_UP_IRQHandler(void)
   timer_SendState++;
   timer_Led4++;
   timer_LedLow++;
+  
+  //סבנמס WWDG
+  HAL_WWDG_Refresh(&hwwdg);
   /* USER CODE END TIM1_UP_IRQn 1 */
 }
 
