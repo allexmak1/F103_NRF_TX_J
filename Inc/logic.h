@@ -1,71 +1,5 @@
-//распиновка
-/*
-PB12- up*
-PB13- dawn*
-PB14- write*
-PB15- left*
-PA8 - O*
-PA9 - X*
-PA10- A*
-PA11- B*
-PA12- back--не работает
-PA15- LED_4
-PB3 - Lb
-PB4 - Ls
-PB5 - Wb*
-PB6 - Ws*
-PB7 - select*
-PB8 - home
-PB9 - list
-5V
-GND
-3V3
-//------
-GND
-GND
-3V3
-NRST
-PB11- jStickA.Batton 
-PB10- jStickB.Batton
-PB1 - SPI1_CS
-PB0 - SPI1_DT
-PA7 - SPI1_MOSI
-PA6 - SPI1_MISO
-PA5 - SPI1_SCK
-PA4 - ADC1_IN4
-PA3 - ADC1_IN3
-PA2 - ADC1_IN2
-PA1 - ADC1_IN1
-PA0 - WKUP - start*
-PC15- LED_3
-PC14- LED_2
-PC13- LED_1
-//------
--non PA13-програматор
--non PA14-програматор
--non PB2 -BOOT1
-*/
-
 #include "main.h"
 #include "stm32f1xx_hal.h"
-
-
-#define TIMER_SLEEP 60000//ms
-#define OFFSET_ZERO 180 //смещение, антидергание на нуле
-
-//ѕередавать не больше 32-х байт 
-//получаетс€ отправл€ем 12(16) байт (кнопки, стикј и стик¬)
-//кнопки - 4 байта
-//0000 0000 0000 0111 1111 1111 1111 1111
-//                |<-           кнопки <-
-//стикј - 4 байта
-//0000 1111 1111 1111 0000 1111 1111 1111
-//|<-         ValG <- |<-         ValV <-
-//стик¬ - 4 байта
-//0000 1111 1111 1111 0000 1111 1111 1111
-//|<-         ValG <- |<-         ValV <-
-//пустой дл€ четности - 4 байта
-//0000 0000 0000 0000 0000 0111 0000 0111
 
 //кнопки
 typedef union{
@@ -93,7 +27,8 @@ typedef union{
     uint8_t StickB:1;//2.2
     uint8_t       :5;//2.3
     
-    uint8_t       :8;
+    uint8_t osn   :4;//3.0
+    uint8_t dop   :4;//3.4
   }bit;
   struct{
     uint8_t gr1;
@@ -142,4 +77,5 @@ void vSendStateJ();
 void vSetStartADC();
 void vNavigationMode();
 uint8_t vToogleLedLow(uint8_t led);
+void vToogleLed4();
 int map_i (int x, int in_min, int in_max, int out_min, int out_max);
