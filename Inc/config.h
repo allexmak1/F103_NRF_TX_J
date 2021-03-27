@@ -99,7 +99,7 @@ GPIO:----
   PA9 - X
   PA10- A
   PA11- B
-  PA12- back--не работает
+  PA12- --не работает
   PA15- LED_4
   PB3 - Lb
   PB4 - Ls
@@ -107,7 +107,7 @@ GPIO:----
   PB6 - Ws
   PB7 - select
   PB8 - home
-  PB9 - list
+  PB9 - start - EXTI
   5V
   GND
   3V3
@@ -127,7 +127,7 @@ GPIO:----
   PA3 - ADC1_IN3
   PA2 - ADC1_IN2
   PA1 - ADC1_IN1
-  PA0 - WKUP - start - EXTI
+  PA0 - ADC1_IN0 делитель напряжения 5.6к и 20к
   PC15- LED_3
   PC14- LED_2
   PC13- LED_1
@@ -149,3 +149,11 @@ WatchDog:
 #define MODE_ON          1      //использование режимов работы
 #define TIMER_SLEEP      60000*5//ms, время бездействия
 #define OFFSET_ZERO      180    //смещение значения стиков, антидергание на нуле
+
+//шаг (4096)/4=1024
+//шаг (4.2-3.4)/4=0.2
+#define LIMIT_0BAR 0            //3.4v
+#define LIMIT_1BAR 3600         //3.6v
+#define LIMIT_2BAR 3770         //3.8v
+#define LIMIT_3BAR 4000         //4.0v
+#define LIMIT_4BAR 4096         //4.2v 2000
