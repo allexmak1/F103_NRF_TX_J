@@ -18,7 +18,7 @@ extern uint32_t timer_SendState;
 extern uint32_t timer_Led4;
 extern uint32_t timer_LedLow;
 
-volatile uint16_t       adc[4] = {0,}; // у нас два канала поэтому массив из 5 элементов
+volatile uint16_t       adc[4] = {0,}; // у нас два канала поэтому массив из 4 элементов
 volatile uint8_t        flagDmaAdc = 0;
 
 extern uint8_t          nRF24_payload[32];
@@ -26,12 +26,7 @@ extern nRF24_RXResult   pipe;
 extern uint8_t          payload_length;
        nRF24_TXResult   stateNrfTX;
        uint8_t          countNoneNrf;
-       int 	        voltageAkbADC;
-       uint16_t         massADC[10];
-       
-       short indZaradAkbJ, indZaradAkbRC;
-       short countIndZaradAkbJ;
-       short countIndZaradAkbRC;
+
 nRF24_TXResult nRF24_TransmitPacket(uint8_t *pBuf, uint8_t length);
 
 void LOGICstart(){
@@ -94,46 +89,25 @@ void LOGIC(){
   //чтение всех входов и выходов
   vReadStatePins();
   
+  //навигация между режимами
+  #ifdef MODE_ON
+  vNavigationMode();
+  #endif
+  
   if(timer_SendState > 200){
     timer_SendState = 0;
     //периодическая отправка данных по NRF
     vSendStateJ();
-    //контроль нажатия кнопки home, для индикации заряда
-    if(jButton.bit.home){
-      if(jMode.isMode == 0){//основной
-        countIndZaradAkbJ++;
-        if(countIndZaradAkbJ > 20)indZaradAkbJ = 1;//4сек
-      }else{//дополнительный
-        countIndZaradAkbRC++;
-        if(countIndZaradAkbRC > 20)indZaradAkbRC = 1;//4сек
-      }
-    }else{ 
-      countIndZaradAkbJ = 0;
-      countIndZaradAkbRC = 0;
-    }
-    //ADC_CHANNEL_0
-    voltageAkbADC = (int) xGetADCValue(ADC_CHANNEL_0);
   }
   
-  //вся индикация
-  if(indZaradAkbJ){
-    vVisionLedBar(1, voltageAkbADC);
-  }else if(indZaradAkbRC){
-    vVisionLedBar(2, voltageAkbADC);
+  //индикация работы 4го светодиода 
+  if(stateNrfTX == nRF24_TX_SUCCESS){
+    vToogleLed4();
   }else{
-    //навигация между режимами
-    #ifdef MODE_ON
-    vNavigationMode();
-    #endif
-    //индикация работы 4го светодиода 
-    if(stateNrfTX == nRF24_TX_SUCCESS){
-      vToogleLed4();
-    }else{
-      HAL_GPIO_TogglePin(GPIOA,GPIO_PIN_15);
-      Delay_ms(50);
-    }
+    HAL_GPIO_TogglePin(GPIOA,GPIO_PIN_15);
+    Delay_ms(50);
   }
-  
+    
   //режим сна
   if(timer_Sleep > TIMER_SLEEP){
     timer_Sleep=0;
@@ -155,7 +129,7 @@ void LOGIC(){
     //!!!здесь проще запустить перезагрузку МК, чем запуск всей переферии, так как сбрасываются все регисторы настроек при глубоком сне
     //сделанно это просто - не вкючаем тактирование таймера1, там где сбрасывется сторожевой таймер, он и перезагрузит.
   }
-  HAL_Delay(3);
+  //HAL_Delay(10);
 }
 
 //чтение всех входов
@@ -179,23 +153,32 @@ void vReadStatePins(){
   jButton.bit.Ls        = xGetStateGpio(jButton.bit.Ls,         GPIOB, GPIO_PIN_4);
   jButton.bit.Wb        = xGetStateGpio(jButton.bit.Wb,         GPIOB, GPIO_PIN_5);
   jButton.bit.Ws        = xGetStateGpio(jButton.bit.Ws,         GPIOB, GPIO_PIN_6);
-  //jButton.bit.start     = xGetStateGpio(jButton.bit.start,      GPIOB, GPIO_PIN_9);
+  //jButton.bit.start     = xGetStateGpio(jButton.bit.start,      GPIOA, GPIO_PIN_0);
   jButton.bit.select    = xGetStateGpio(jButton.bit.select,     GPIOB, GPIO_PIN_7);
   jButton.bit.home      = xGetStateGpio(jButton.bit.home,       GPIOB, GPIO_PIN_8);
   jButton.bit.back      = 0;//xGetStateGpio(jButton.bit.back,    GPIOA, GPIO_PIN_12);
-  jButton.bit.list      = 0;//xGetStateGpio(jButton.bit.list,    GPIOB, GPIO_PIN_9);
+  jButton.bit.list      = xGetStateGpio(jButton.bit.list,       GPIOB, GPIO_PIN_9);
   jButton.bit.StickA    = xGetStateGpio(jButton.bit.StickA,     GPIOB, GPIO_PIN_11);
   jButton.bit.StickB    = xGetStateGpio(jButton.bit.StickB,     GPIOB, GPIO_PIN_10);
   
   //кнопки которые в EXTI смотрим только отжатие
-  if(jButton.bit.start) jButton.bit.start = xGetStateGpio(jButton.bit.start,   GPIOB, GPIO_PIN_9);
+  //  if(jButton.bit.up)    jButton.bit.up    = xGetStateGpio(jButton.bit.up,      GPIOB, GPIO_PIN_12);
+  //  if(jButton.bit.dawn)  jButton.bit.dawn  = xGetStateGpio(jButton.bit.dawn,    GPIOB, GPIO_PIN_13);
+  //  if(jButton.bit.write) jButton.bit.write = xGetStateGpio(jButton.bit.write,   GPIOB, GPIO_PIN_14);
+  //  if(jButton.bit.left)  jButton.bit.left  = xGetStateGpio(jButton.bit.left,    GPIOB, GPIO_PIN_15);
+  //  if(jButton.bit.O)     jButton.bit.O     = xGetStateGpio(jButton.bit.O,       GPIOA, GPIO_PIN_8);
+  //  if(jButton.bit.X)     jButton.bit.X     = xGetStateGpio(jButton.bit.X,       GPIOA, GPIO_PIN_9);
+  //  if(jButton.bit.A)     jButton.bit.A     = xGetStateGpio(jButton.bit.A,       GPIOA, GPIO_PIN_10);
+  //  if(jButton.bit.B)     jButton.bit.B     = xGetStateGpio(jButton.bit.A,       GPIOA, GPIO_PIN_11);
+  if(jButton.bit.start) jButton.bit.start = xGetStateGpio(jButton.bit.start,   GPIOA, GPIO_PIN_0);
+  //  if(jButton.bit.select)jButton.bit.select= xGetStateGpio(jButton.bit.select,  GPIOB, GPIO_PIN_7);
+  //  if(jButton.bit.Wb)    jButton.bit.Wb    = xGetStateGpio(jButton.bit.Wb,    GPIOB, GPIO_PIN_5);
+  //  if(jButton.bit.Ws)    jButton.bit.Ws    = xGetStateGpio(jButton.bit.Ws,    GPIOB, GPIO_PIN_6);
   
   //АЦП код на все каналы
   if(flagDmaAdc){
     flagDmaAdc = 0;
     HAL_ADC_Stop_DMA(&hadc1);
-    
-
     
     //ADC_CHANNEL_1
     temp = (uint16_t)adc[0];
@@ -408,125 +391,7 @@ void vToogleLed4(){
   }
 }
 
-//лимиты батареи
-void vVisionLedBar(int mode, int value){
-  if((value >= LIMIT_0BAR) && (value < LIMIT_1BAR)){
-    vLedBar(mode,1);
-  }
-  else if((value >= LIMIT_1BAR) && (value < LIMIT_2BAR)){
-    vLedBar(mode,2);
-  }
-  else if((value >= LIMIT_2BAR) && (value < LIMIT_3BAR)){
-    vLedBar(mode,3);
-  }
-  else if((value >= LIMIT_3BAR) && (value < LIMIT_4BAR)){
-    vLedBar(mode,4);
-  }
-}
-
-//индикация состояния батареи
-void vLedBar(int mode, int n){
-  static int stateBar = 0;
-  static int ticBar = 0;
-  static int count = 0;
-  static int flagMode = 1;
-  switch (count){
-  case 0:
-    ticBar = 0;
-    if(stateBar)count++;
-    break;
-  case 1:
-    jLed.one   = 0;
-    jLed.two   = 0;
-    jLed.fhree = 0;
-    jLed.four  = 0;
-    if(ticBar>300){
-      jLed.one   = 1;
-      jLed.two   = 1;
-      jLed.fhree = 1;
-      jLed.four  = 1;
-      ticBar = 0;
-      count++;
-    }
-    break;
-  case 2:
-    if(ticBar>250){
-      jLed.one   = 0;
-      jLed.two   = 0;
-      jLed.fhree = 0;
-      jLed.four  = 0;
-      ticBar = 0;
-      count++;
-      if(mode==2 && flagMode==1){count=1;flagMode=0;}
-    }
-    break;
-  case 3:
-    if(ticBar>400){
-      jLed.one   = 1;
-      ticBar = 0;
-      flagMode=1;
-      count++;
-      if(n==1)count=7;
-    }
-    break;
-  case 4:
-    if(ticBar>300){
-      jLed.two   = 1;
-      ticBar = 0;
-      count++;
-      if(n==2)count=7;
-    }
-    break;
-  case 5:
-    if(ticBar>300){
-      jLed.fhree = 1;
-      ticBar = 0;
-      count++;
-      if(n==3)count=7;
-    }
-    break;
-  case 6:
-    if(ticBar>300){
-      jLed.four  = 0;
-      ticBar = 0;
-      count++;
-      if(n==4)count=7;
-    }
-    break;
-  case 7:
-    if(ticBar>700){
-      jLed.one   = 0;
-      jLed.two   = 0;
-      jLed.fhree = 0;
-      jLed.four  = 0;
-      count=0;
-      stateBar=0;
-    }
-    break;
-  }
-}
-
 //масштабирование
 int map_i (int x, int in_min, int in_max, int out_min, int out_max){
   return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
-}
-
-//опрос АЦП без ДМА
-int xGetADCValue(uint32_t Channel){
-  int val = 0;
-  int Count = 3;//микрофильтр 
-  ADC_ChannelConfTypeDef sConfig = {0};
-  sConfig.Channel=Channel;
-  sConfig.Rank=ADC_REGULAR_RANK_1;
-  sConfig.SamplingTime=ADC_SAMPLETIME_41CYCLES_5;
-  HAL_ADC_ConfigChannel(&hadc1,&sConfig);
-  
-  HAL_ADC_Start(&hadc1);
-  HAL_ADC_PollForConversion(&hadc1,100000);
-  
-  for(int i = 0; i < Count; i++){
-    val += HAL_ADC_GetValue(&hadc1);
-  }
-  HAL_ADC_Stop(&hadc1);
-  return val / Count;
 }

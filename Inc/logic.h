@@ -78,7 +78,4 @@ void vSetStartADC();
 void vNavigationMode();
 uint8_t vToogleLedLow(uint8_t led);
 void vToogleLed4();
-void vVisionLedBar(int mode, int value);
-void vLedBar(int mode, int n);
 int map_i (int x, int in_min, int in_max, int out_min, int out_max);
-int xGetADCValue(uint32_t Channel);
