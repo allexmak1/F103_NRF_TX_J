@@ -150,9 +150,9 @@ nRF24_TXResult nRF24_TransmitPacket(uint8_t *pBuf, uint8_t length) {
 	}
 
 	// Check the flags in STATUS register
-//	UART_SendStr("[");
-//	UART_SendHex8(status);
-//	UART_SendStr("] ");
+	UART_SendStr("[");
+	UART_SendHex8(status);
+	UART_SendStr("] ");
 
 	// Clear pending IRQ flags
     nRF24_ClearIRQFlags();
