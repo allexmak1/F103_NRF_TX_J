@@ -36,6 +36,8 @@ uint32_t timer_Sleep = 0;
 uint32_t timer_SendState = 0;
 uint32_t timer_Led4 = 0;
 uint32_t timer_LedLow = 0;
+uint32_t timer_ticBar = 0;
+
 extern uint8_t flagDmaAdc;
 extern jButton_t jButton;
 
@@ -268,6 +270,7 @@ void TIM1_UP_IRQHandler(void)
   timer_SendState++;
   timer_Led4++;
   timer_LedLow++;
+  timer_ticBar++;
   
   //סבנמס WWDG
   HAL_WWDG_Refresh(&hwwdg);

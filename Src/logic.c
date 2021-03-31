@@ -17,6 +17,7 @@ extern uint32_t timer_Sleep;
 extern uint32_t timer_SendState;
 extern uint32_t timer_Led4;
 extern uint32_t timer_LedLow;
+extern uint32_t timer_ticBar;
 
 volatile uint16_t       adc[5] = {0,}; // у нас два канала поэтому массив из 5 элементов
 volatile uint8_t        flagDmaAdc = 0;
@@ -84,10 +85,8 @@ void LOGICstart(){
   
   vSetStartADC();
   payload_length = 12;
-  HAL_Delay(300);
-  
+  HAL_Delay(300); 
 }
-
 
 void LOGIC(){
   //чтение всех входов и выходов
@@ -101,10 +100,10 @@ void LOGIC(){
     if(jButton.bit.home){
       if(jMode.isMode == 0){//основной
         countIndZaradAkbJ++;
-        if(countIndZaradAkbJ > 20)indZaradAkbJ = 1;//4сек
+        if(countIndZaradAkbJ > 15)indZaradAkbJ = 1;//4сек
       }else{//дополнительный
         countIndZaradAkbRC++;
-        if(countIndZaradAkbRC > 20)indZaradAkbRC = 1;//4сек
+        if(countIndZaradAkbRC > 15)indZaradAkbRC = 1;//4сек
       }
     }else{ 
       countIndZaradAkbJ = 0;
@@ -290,8 +289,8 @@ void vSendStateJ(){
 //стартовое измерение нуля
 void vSetStartADC(){
   HAL_ADCEx_Calibration_Start(&hadc1);
-  HAL_ADC_Start_DMA(&hadc1, (uint32_t*)&adc, 16);
-  HAL_Delay(50);
+  HAL_ADC_Start_DMA(&hadc1, (uint32_t*)&adc, 5);
+  HAL_Delay(200);
   if(flagDmaAdc){
     flagDmaAdc = 0;
     HAL_ADC_Stop_DMA(&hadc1);
@@ -303,7 +302,7 @@ void vSetStartADC(){
     adc[2] = 0;
     adc[3] = 0;
     adc[4] = 0;
-    HAL_ADC_Start_DMA(&hadc1, (uint32_t*)&adc, 16);
+    HAL_ADC_Start_DMA(&hadc1, (uint32_t*)&adc, 5);
   };
 }
 
@@ -425,81 +424,80 @@ void vVisionLedBar(int mode, int value){
 
 //индикация состояния батареи
 void vLedBar(int mode, int n){
-  static int stateBar = 0;
-  static int ticBar = 0;
   static int count = 0;
   static int flagMode = 1;
   switch (count){
   case 0:
-    ticBar = 0;
-    if(stateBar)count++;
+    timer_ticBar = 0;
+    count++;
     break;
   case 1:
     jLed.one   = 0;
     jLed.two   = 0;
     jLed.fhree = 0;
     jLed.four  = 0;
-    if(ticBar>300){
+    if(timer_ticBar>300){
       jLed.one   = 1;
       jLed.two   = 1;
       jLed.fhree = 1;
       jLed.four  = 1;
-      ticBar = 0;
+      timer_ticBar = 0;
       count++;
     }
     break;
   case 2:
-    if(ticBar>250){
+    if(timer_ticBar>250){
       jLed.one   = 0;
       jLed.two   = 0;
       jLed.fhree = 0;
       jLed.four  = 0;
-      ticBar = 0;
+      timer_ticBar = 0;
       count++;
       if(mode==2 && flagMode==1){count=1;flagMode=0;}
     }
     break;
   case 3:
-    if(ticBar>400){
+    if(timer_ticBar>400){
       jLed.one   = 1;
-      ticBar = 0;
+      timer_ticBar = 0;
       flagMode=1;
       count++;
       if(n==1)count=7;
     }
     break;
   case 4:
-    if(ticBar>300){
+    if(timer_ticBar>300){
       jLed.two   = 1;
-      ticBar = 0;
+      timer_ticBar = 0;
       count++;
       if(n==2)count=7;
     }
     break;
   case 5:
-    if(ticBar>300){
+    if(timer_ticBar>300){
       jLed.fhree = 1;
-      ticBar = 0;
+      timer_ticBar = 0;
       count++;
       if(n==3)count=7;
     }
     break;
   case 6:
-    if(ticBar>300){
+    if(timer_ticBar>300){
       jLed.four  = 0;
-      ticBar = 0;
+      timer_ticBar = 0;
       count++;
       if(n==4)count=7;
     }
     break;
   case 7:
-    if(ticBar>700){
+    if(timer_ticBar>900){
       jLed.one   = 0;
       jLed.two   = 0;
       jLed.fhree = 0;
       jLed.four  = 0;
       count=0;
-      stateBar=0;
+      indZaradAkbJ = 0;
+      indZaradAkbRC = 0;
     }
     break;
   }
