@@ -34,6 +34,12 @@ extern uint8_t          payload_length;
        short countIndZaradAkbRC;
 nRF24_TXResult nRF24_TransmitPacket(uint8_t *pBuf, uint8_t length);
 
+// Some variables
+//uint32_t packets_lost = 0; // global counter of lost packets
+//uint8_t otx;
+//uint8_t otx_plos_cnt; // lost packet count
+//uint8_t otx_arc_cnt; // retransmit count
+
 void LOGICstart(){
   HAL_TIM_Base_Start_IT(&htim1);
   //HAL_Delay(500);
@@ -53,6 +59,7 @@ void LOGICstart(){
     Delay_ms(50);
   }
   nRF24_Init();
+  
   // This is simple transmitter (to one logic address):
   //   - TX address: '0xE7 0x1C 0xE3'
   //   - payload: 5 bytes
@@ -82,6 +89,45 @@ void LOGICstart(){
   // Wake the transceiver
   nRF24_SetPowerMode(nRF24_PWR_UP);
   
+//  // This is simple transmitter with Enhanced ShockBurst (to one logic address):
+//  //   - TX address: 'ESB'
+//  //   - payload: 10 bytes
+//  //   - RF channel: 40 (2440MHz)
+//  //   - data rate: 2Mbps
+//  //   - CRC scheme: 2 byte
+//  
+//  // The transmitter sends a 10-byte packets to the address 'ESB' with Auto-ACK (ShockBurst enabled)
+//  // Set RF channel
+//  nRF24_SetRFChannel(40);
+//  // Set data rate
+//  nRF24_SetDataRate(nRF24_DR_2Mbps);
+//  // Set CRC scheme
+//  nRF24_SetCRCScheme(nRF24_CRC_2byte);
+//  // Set address width, its common for all pipes (RX and TX)
+//  nRF24_SetAddrWidth(3);
+//  // Configure TX PIPE
+//  static const uint8_t nRF24_ADDR[] = { 'E', 'S', 'B' };
+//  nRF24_SetAddr(nRF24_PIPETX, nRF24_ADDR); // program TX address
+//  nRF24_SetAddr(nRF24_PIPE0, nRF24_ADDR); // program address for pipe#0, must be same as TX (for Auto-ACK)
+//  // Set TX power (maximum)
+//  nRF24_SetTXPower(nRF24_TXPWR_0dBm);
+//  // Configure auto retransmit: 10 retransmissions with pause of 2500s in between
+//  nRF24_SetAutoRetr(nRF24_ARD_2500us, 10);
+//  // Enable Auto-ACK for pipe#0 (for ACK packets)
+//  nRF24_EnableAA(nRF24_PIPE0);
+//  // Set operational mode (PTX == transmitter)
+//  nRF24_SetOperationalMode(nRF24_MODE_TX);
+//  // Clear any pending IRQ flags
+//  nRF24_ClearIRQFlags();
+//  // Enable DPL
+//  nRF24_SetDynamicPayloadLength(nRF24_DPL_ON);
+//  nRF24_SetPayloadWithAck(1);
+//  // Wake the transceiver
+//  nRF24_SetPowerMode(nRF24_PWR_UP);
+//  
+
+        
+        
   
   vSetStartADC();
   payload_length = 12;
@@ -100,10 +146,10 @@ void LOGIC(){
     if(jButton.bit.home){
       if(jMode.isMode == 0){//основной
         countIndZaradAkbJ++;
-        if(countIndZaradAkbJ > 15)indZaradAkbJ = 1;//4сек
+        if(countIndZaradAkbJ > 10)indZaradAkbJ = 1;//4сек
       }else{//дополнительный
         countIndZaradAkbRC++;
-        if(countIndZaradAkbRC > 15)indZaradAkbRC = 1;//4сек
+        if(countIndZaradAkbRC > 10)indZaradAkbRC = 1;//4сек
       }
     }else{ 
       countIndZaradAkbJ = 0;
@@ -168,8 +214,8 @@ void vReadStatePins(){
   jButton.bit.write     = xGetStateGpio(jButton.bit.write,      GPIOB, GPIO_PIN_14);
   jButton.bit.left      = xGetStateGpio(jButton.bit.left,       GPIOB, GPIO_PIN_15);  
   jButton.bit.O         = xGetStateGpio(jButton.bit.O,          GPIOA, GPIO_PIN_8);
-  jButton.bit.X         = 0;//xGetStateGpio(jButton.bit.X,  GPIOA, GPIO_PIN_9);
-  jButton.bit.A         = 0;//xGetStateGpio(jButton.bit.A,  GPIOA, GPIO_PIN_10);
+  jButton.bit.X         = xGetStateGpio(jButton.bit.X,          GPIOA, GPIO_PIN_9);
+  jButton.bit.A         = xGetStateGpio(jButton.bit.A,          GPIOA, GPIO_PIN_10);
   jButton.bit.B         = xGetStateGpio(jButton.bit.B,          GPIOA, GPIO_PIN_11);
   jButton.bit.Lb        = xGetStateGpio(jButton.bit.Lb,         GPIOB, GPIO_PIN_3);
   jButton.bit.Ls        = xGetStateGpio(jButton.bit.Ls,         GPIOB, GPIO_PIN_4);
@@ -284,6 +330,27 @@ void vSendStateJ(){
   nRF24_payload[11] = jStickB.ValG >> 8;
   // отправка
   stateNrfTX = nRF24_TransmitPacket(nRF24_payload, payload_length);
+  
+//  otx = nRF24_GetRetransmitCounters();
+//  nRF24_ReadPayloadDpl(nRF24_payload, &payload_length );
+//  otx_plos_cnt = (otx & nRF24_MASK_PLOS_CNT) >> 4; // packets lost counter
+//  otx_arc_cnt  = (otx & nRF24_MASK_ARC_CNT); // auto retransmissions counter
+//  switch (stateNrfTX) {
+//  case nRF24_TX_SUCCESS:
+//    //UART_SendStr("OK");
+//    break;
+//  case nRF24_TX_TIMEOUT:
+//    //UART_SendStr("TIMEOUT");
+//    break;
+//  case nRF24_TX_MAXRT:
+//    //UART_SendStr("MAX RETRANSMIT");
+//    packets_lost += otx_plos_cnt;
+//    nRF24_ResetPLOS();
+//    break;
+//  default:
+//    //UART_SendStr("ERROR");
+//    break;
+//  }
 }
 
 //стартовое измерение нуля
@@ -457,7 +524,7 @@ void vLedBar(int mode, int n){
     }
     break;
   case 3:
-    if(timer_ticBar>400){
+    if(timer_ticBar>500){
       jLed.one   = 1;
       timer_ticBar = 0;
       flagMode=1;
@@ -466,7 +533,7 @@ void vLedBar(int mode, int n){
     }
     break;
   case 4:
-    if(timer_ticBar>300){
+    if(timer_ticBar>400){
       jLed.two   = 1;
       timer_ticBar = 0;
       count++;
@@ -474,7 +541,7 @@ void vLedBar(int mode, int n){
     }
     break;
   case 5:
-    if(timer_ticBar>300){
+    if(timer_ticBar>400){
       jLed.fhree = 1;
       timer_ticBar = 0;
       count++;
@@ -482,22 +549,25 @@ void vLedBar(int mode, int n){
     }
     break;
   case 6:
-    if(timer_ticBar>300){
-      jLed.four  = 0;
+    if(timer_ticBar>400){
+      jLed.four  = 1;
       timer_ticBar = 0;
       count++;
       if(n==4)count=7;
     }
     break;
   case 7:
-    if(timer_ticBar>900){
+    if(timer_ticBar>1900){
       jLed.one   = 0;
       jLed.two   = 0;
       jLed.fhree = 0;
       jLed.four  = 0;
       count=0;
-      indZaradAkbJ = 0;
-      indZaradAkbRC = 0;
+      if(!jButton.bit.home){
+        indZaradAkbJ = 0;
+        indZaradAkbRC = 0;
+        timer_Led4 = 3000;
+      }
     }
     break;
   }

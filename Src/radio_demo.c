@@ -12,14 +12,14 @@ int wile = 0;
 
 #ifdef USE_HAL_DRIVER
 
-extern UART_HandleTypeDef huart1;
+//extern UART_HandleTypeDef huart1;
 
 void UART_SendChar(char b) {
-	HAL_UART_Transmit(&huart1, (uint8_t *) &b, 1, 200);
+//	HAL_UART_Transmit(&huart1, (uint8_t *) &b, 1, 200);
 }
 
 void UART_SendStr(char *string) {
-	HAL_UART_Transmit(&huart1, (uint8_t *) string, (uint16_t) strlen(string), 200);
+//	HAL_UART_Transmit(&huart1, (uint8_t *) string, (uint16_t) strlen(string), 200);
 }
 
 void Toggle_LED() {

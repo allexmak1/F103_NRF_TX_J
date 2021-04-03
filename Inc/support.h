@@ -24,7 +24,7 @@ typedef enum {
 	nRF24_TX_ERROR  = (uint8_t)0x00, // Unknown error
 	nRF24_TX_SUCCESS,                // Packet has been transmitted successfully
 	nRF24_TX_TIMEOUT,                // It was timeout during packet transmit
-	nRF24_TX_MAXRT                   // Transmit failed with maximum auto retransmit count
+	nRF24_TX_MAXRT                   // Ошибка передачи с максимальным числом автоповторов
 } nRF24_TXResult;
 
 
