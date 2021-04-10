@@ -1,6 +1,6 @@
 ###############################################################################
 #
-# IAR ELF Linker V8.30.1.114/W32 for ARM                  02/Apr/2021  20:14:16
+# IAR ELF Linker V8.30.1.114/W32 for ARM                  10/Apr/2021  12:31:07
 # Copyright 2007-2018 IAR Systems AB.
 #
 #    Output file  =  
@@ -10,7 +10,7 @@
 #        D:\project\Project
 #        stm\NRF\F103_NRF_TX_J\EWARM\F103_NRF_TXJ\List\F103_NRF_TXJ.map
 #    Command line =  
-#        -f C:\Users\allex\AppData\Local\Temp\EW3A95.tmp ("D:\project\Project
+#        -f C:\Users\allex\AppData\Local\Temp\EWA1E.tmp ("D:\project\Project
 #        stm\NRF\F103_NRF_TX_J\EWARM\F103_NRF_TXJ\Obj\logic.o"
 #        "D:\project\Project
 #        stm\NRF\F103_NRF_TX_J\EWARM\F103_NRF_TXJ\Obj\main.o"
@@ -508,7 +508,7 @@ timer_ticBar            0x2000'01a8    0x4  Data  Gb  stm32f1xx_it.o [1]
 uwTick                  0x2000'0044    0x4  Data  Gb  stm32f1xx_hal.o [1]
 uwTickFreq              0x2000'0040    0x1  Data  Gb  stm32f1xx_hal.o [1]
 uwTickPrio              0x2000'0048    0x4  Data  Gb  stm32f1xx_hal.o [1]
-vLedBar                  0x800'0771   0xe4  Code  Gb  logic.o [1]
+vLedBar                  0x800'0775   0xe0  Code  Gb  logic.o [1]
 vLedBar::count          0x2000'0038    0x4  Data  Lc  logic.o [1]
 vLedBar::flagMode       0x2000'003c    0x4  Data  Lc  logic.o [1]
 vNavigationMode          0x800'0613   0xe4  Code  Gb  logic.o [1]
@@ -520,7 +520,7 @@ vSetStartADC             0x800'05b3   0x60  Code  Gb  logic.o [1]
 vSetStateGpio            0x800'0547   0x12  Code  Gb  logic.o [1]
 vToogleLed4              0x800'0713   0x2e  Code  Gb  logic.o [1]
 vToogleLedLow            0x800'06f7   0x1c  Code  Gb  logic.o [1]
-vVisionLedBar            0x800'0741   0x30  Code  Gb  logic.o [1]
+vVisionLedBar            0x800'0741   0x32  Code  Gb  logic.o [1]
 voltageAkbADC           0x2000'0034    0x4  Data  Gb  logic.o [1]
 xGetStateGpio            0x800'051d   0x2a  Code  Gb  logic.o [1]
 

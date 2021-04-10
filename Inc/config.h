@@ -153,7 +153,7 @@ WatchDog:
 //шаг (4096)/4=1024
 //шаг (4.2-3.4)/4=0.2
 #define LIMIT_0BAR 0            //3.4v
-#define LIMIT_1BAR 3600         //3.6v
-#define LIMIT_2BAR 3770         //3.8v
-#define LIMIT_3BAR 4000         //4.0v
-#define LIMIT_4BAR 4096         //4.2v 2000
+#define LIMIT_1BAR 3200         //3.6v
+#define LIMIT_2BAR 3410         //3.8v
+#define LIMIT_3BAR 3510         //4.0v
+#define LIMIT_4BAR 4000         //4.2v 2000

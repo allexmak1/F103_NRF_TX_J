@@ -533,7 +533,7 @@ void vLedBar(int mode, int n){
     }
     break;
   case 4:
-    if(timer_ticBar>400){
+    if(timer_ticBar>200){
       jLed.two   = 1;
       timer_ticBar = 0;
       count++;
@@ -541,7 +541,7 @@ void vLedBar(int mode, int n){
     }
     break;
   case 5:
-    if(timer_ticBar>400){
+    if(timer_ticBar>200){
       jLed.fhree = 1;
       timer_ticBar = 0;
       count++;
@@ -549,7 +549,7 @@ void vLedBar(int mode, int n){
     }
     break;
   case 6:
-    if(timer_ticBar>400){
+    if(timer_ticBar>200){
       jLed.four  = 1;
       timer_ticBar = 0;
       count++;
